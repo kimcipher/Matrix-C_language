@@ -1,6 +1,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdbool.h>
+
+
+
+// Define the board dimensions
+#define BOARD_WIDTH  6
+#define BOARD_HEIGHT 6
+
+// Define the cell struct
+typedef struct {
+    int value;
+    bool matched;
+    bool hasPowerup;
+} Cell;
+
+// Define the board array
+Cell board[BOARD_WIDTH][BOARD_HEIGHT];
 
 int main() {
   int rows, cols, score = 0, count = 0;
@@ -97,5 +114,130 @@ int main() {
     }
     printf("\n");
   }
+
+  void generateBoard() {
+    // Initialize the board to all zeros
+    for (int i = 0; i < BOARD_WIDTH; i++) {
+        for (int j = 0; j < BOARD_HEIGHT; j++) {
+            board[i][j].value = 0;
+            board[i][j].matched = false;
+            board[i][j].hasPowerup = false;
+        }
+    }
+    
+    // Generate random numbers for each cell on the board
+    for (int i = 0; i < BOARD_WIDTH; i++) {
+        for (int j = 0; j < BOARD_HEIGHT; j++) {
+            // Generate a random number between 1 and 6 (inclusive)
+            board[i][j].value = rand() % 6 + 1;
+            
+            // Ensure that there are no initial matches
+            while ((i >= 2 && board[i][j].value == board[i-1][j].value && board[i][j].value == board[i-2][j].value) ||
+                   (j >= 2 && board[i][j].value == board[i][j-1].value && board[i][j].value == board[i][j-2].value)) {
+                board[i][j].value = rand() % 6 + 1;
+            }
+        }
+    }
+    
+    // Randomly place power-ups on the board
+    for (int i = 0; i < BOARD_WIDTH; i++) {
+        for (int j = 0; j < BOARD_HEIGHT; j++) {
+            // Generate a random number between 1 and 10 (inclusive)
+            int randNum = rand() % 10 + 1;
+            
+            // Place a power-up if the random number is 1
+            if (randNum == 1) {
+                board[i][j].hasPowerup = true;
+            }
+        }
+    }
+}
+
+// Shuffle power-up: shuffles the board
+void shuffle() {
+    // Shuffle the board by swapping the values of random cells
+    for (int i = 0; i < BOARD_WIDTH; i++) {
+        for (int j = 0; j < BOARD_HEIGHT; j++) {
+            int randX = rand() % BOARD_WIDTH;
+            int randY = rand() % BOARD_HEIGHT;
+            int tempValue = board[i][j].value;
+            board[i][j].value = board[randX][randY].value;
+            board[randX][randY].value = tempValue;
+        }
+    }
+}
+
+// Swap power-up: swaps the values of two cells
+void swap(int x1, int y1, int x2, int y2) {
+    int tempValue = board[x1][y1].value;
+    board[x1][y1].value = board[x2][y2].value;
+    board[x2][y2].value = tempValue;
+}
+
+// Bonus points power-up: adds bonus points to the user's score
+void bonusPoints(int points) {
+    // Add bonus points to the user's score
+    // (Assuming a global variable called 'score')
+    score += points;
+}
+
+// Bomb power-up: removes all cells of a certain value from the board
+void bomb(int value) {
+    for (int i = 0; i < BOARD_WIDTH; i++) {
+        for (int j = 0; j < BOARD_HEIGHT; j++) {
+            if (board[i][j].value == value) {
+                board[i][j].value = 0;
+                board[i][j].matched = true;
+            }
+        }
+    }
+}
+
+// Multiplier power-up: multiplies the value of a cell by a certain amount
+void multiplier(int x, int y, int multiplier) {
+    board[x][y].value *= multiplier;
+}
+
+// Freeze power-up: freezes a row or column for a certain number of turns
+void freeze(int x, int y, int turns) {
+    // (Assuming a global variable called 'turnCounter')
+    board[x][y].value = 0;
+    board[x][y].matched = true;
+    if (x == 0) {
+        for (int i = 1; i < BOARD_HEIGHT; i++) {
+            board[i][y].value = 0;
+            board[i][y].matched = true;
+        }
+    } else {
+        for (int i = 0; i < x; i++) {
+            board[i][y].value = 0;
+            board[i][y].matched = true;
+        }
+    }
+    turnCounter += turns;
+}
+
+// Mystery Cell power-up: randomly selects a power-up to apply to the board
+void mysteryCell() {
+    // Generate a random number between 1 and 7 (inclusive)
+    int powerupNum = rand() % 7 + 1;
+    
+    // Apply the corresponding power-up to the board
+    switch (powerupNum) {
+        case 1:
+            shuffle();
+            break;
+        case 2:
+            swap(rand() % BOARD_WIDTH, rand() % BOARD_HEIGHT, rand() % BOARD_WIDTH, rand() % BOARD_HEIGHT);
+            break;
+        case 3:
+            bonusPoints(rand() % 101 + 100);
+            break;
+        case 4:
+            bomb(rand() % 6 + 1);
+            break;
+        case 5:
+            multiplier(rand() % BOARD_WIDTH, rand() % BOARD_HEIGHT, rand() % 4 + 2);
+            break;
 
  
