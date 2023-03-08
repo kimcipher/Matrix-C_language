@@ -16,6 +16,50 @@ typedef struct {
     bool hasPowerup;
 } Cell;
 
+typedef struct {
+    Cell board[BOARD_WIDTH][BOARD_HEIGHT];
+} Board;
+
+Board levels[NUM_LEVELS];
+
+void loadLevel(int levelNum) {
+    // Load the board for the specified level
+    // (Assuming the levels are stored in an external file called 'levels.txt')
+    FILE* file = fopen("levels.txt", "r");
+    if (file == NULL) {
+        printf("Error: could not open levels file.\n");
+        return;
+    }
+    int boardNum = levelNum - 1;
+    for (int i = 0; i < BOARD_WIDTH; i++) {
+        for (int j = 0; j < BOARD_HEIGHT; j++) {
+            int value;
+            if (fscanf(file, "%d", &value) == 1) {
+                levels[boardNum].board[i][j].value = value;
+                levels[boardNum].board[i][j].matched = false;
+                levels[boardNum].board[i][j].hasPowerup = false;
+            } else {
+                printf("Error: invalid levels file format.\n");
+                fclose(file);
+                return;
+            }
+        }
+    }
+    fclose(file);
+}
+
+void loadNextLevel(int currentLevel) {
+    if (currentLevel >= NUM_LEVELS) {
+        printf("Congratulations, you've completed all the levels!\n");
+        return;
+    }
+    loadLevel(currentLevel + 1);
+    printf("Level %d\n", currentLevel + 1);
+    // Reset the game state (e.g. score, number of turns left, etc.)
+}
+
+
+
 // Define the board array
 Cell board[BOARD_WIDTH][BOARD_HEIGHT];
 
@@ -151,7 +195,8 @@ int main() {
             }
         }
     }
-}
+  }
+
 
 // Shuffle power-up: shuffles the board
 void shuffle() {
@@ -240,4 +285,6 @@ void mysteryCell() {
             multiplier(rand() % BOARD_WIDTH, rand() % BOARD_HEIGHT, rand() % 4 + 2);
             break;
 
- 
+    }
+}
+
