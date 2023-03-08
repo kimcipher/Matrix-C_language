@@ -1,1 +1,1 @@
-# Matrix-C_language
+This code creates a 3x3 matrix with the numbers 1 to 9, and randomly selects a cell to swap with the user's chosen cell. The game continues until the user has made five swaps. Finally, the final board is printed out.
