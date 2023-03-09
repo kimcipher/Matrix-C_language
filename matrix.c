@@ -13,6 +13,135 @@ bool gameOver = false;
 #define BOARD_WIDTH  6
 #define BOARD_HEIGHT 6
 
+
+// The Game modes
+#define TIMED_MODE 1
+#define ENDLESS_MODE 2
+#define PUZZLE_MODE 3
+#define CHALLENGE_MODE 4
+#define BOSS_MODE 5
+#define TOURNAMENT_MODE 6
+
+// Define the game timer duration
+#define GAME_DURATION 60
+
+// Define the game board and other game variables
+cell board[ROWS][COLS];
+int score = 0;
+int moves_remaining = 0;
+int time_remaining = GAME_DURATION;
+
+// Define the function to initialize the game board
+void initialize_board() {
+    // TODO: Write code to randomly generate a game board based on the game rules
+}
+
+// Define the function to update the game board after a match is made
+void update_board(int row1, int col1, int row2, int col2) {
+    // TODO: Write code to update the game board after a match is made
+}
+
+// Define the function to activate a power-up
+void activate_power_up() {
+    // TODO: Write code to activate a power-up
+}
+
+// Define the function to check if the game is over
+int is_game_over() {
+    // TODO: Write code to check if the game is over
+}
+
+// Define the function to handle user input
+void handle_input() {
+    // TODO: Write code to handle user input
+}
+
+// Define the function to update the game timer
+void update_timer() {
+    // Decrement the time remaining on the clock
+    time_remaining--;
+
+    // Check if the time has run out
+    if (time_remaining == 0) {
+        // End the game
+        printf("Time's up! Game over.\n");
+        exit(0);
+    }
+}
+
+// Define the function to print the game board
+void print_board() {
+    int i, j;
+
+    for (i = 0; i < ROWS; i++) {
+        for (j = 0; j < COLS; j++) {
+            printf("%d ", board[i][j].value);
+        }
+        printf("\n");
+    }
+}
+
+//Function that generate the game board
+void generateBoard(Cell board[BOARD_SIZE][BOARD_SIZE]) {
+    int i, j;
+
+    // initialize all cells to have a random value and no power-up
+    for (i = 0; i < BOARD_SIZE; i++) {
+        for (j = 0; j < BOARD_SIZE; j++) {
+            board[i][j].value = rand() % NUM_COLORS;
+            board[i][j].matched = false;
+            board[i][j].powerUp = NONE;
+        }
+    }
+
+    // ensure there are no initial matches
+    while (checkMatches(board)) {
+        // if there are matches, reshuffle the board
+        shuffleBoard(board);
+    }
+
+    // randomly place power-ups on the board
+    int numPowerUps = 0;
+    while (numPowerUps < NUM_POWER_UPS) {
+        int row = rand() % BOARD_SIZE;
+        int col = rand() % BOARD_SIZE;
+        if (board[row][col].powerUp == NONE) {
+            board[row][col].powerUp = rand() % NUM_POWER_UP_TYPES;
+            numPowerUps++;
+        }
+    }
+}
+
+
+int main() {
+    // Initialize the random number generator
+    srand(time(NULL));
+
+    // Initialize the game board
+    initialize_board();
+
+    // Start the game loop
+    while (1) {
+        // Print the game board
+        print_board();
+
+        // Handle user input
+        handle_input();
+
+        // Update the game timer
+        update_timer();
+
+        // Check if the game is over
+        if (is_game_over()) {
+            // End the game
+            printf("Game over.\n");
+            exit(0);
+        }
+    }
+
+    return 0;
+}
+
 // Define the cell struct
 typedef struct {
     int value;
@@ -318,6 +447,45 @@ void handleKeyPress(char key) {
     }
 }
 
+// function that handles user input
+void handleInput(Cell board[BOARD_SIZE][BOARD_SIZE], int *selectedRow, int *selectedCol, bool *swappingCells, int *swapRow, int *swapCol, bool *usingPowerUp, int *powerUpRow, int *powerUpCol, PowerUp *selectedPowerUp) {
+    // check if user has clicked a cell to select it
+    if (isClicked()) {
+        int row = getClickedRow();
+        int col = getClickedCol();
+
+        // check if user is selecting a cell to swap
+        if (*swappingCells) {
+            if (row == *selectedRow && col == *selectedCol) {
+                // user clicked the same cell twice, cancel swapping
+                *swappingCells = false;
+            } else if (isAdjacent(*selectedRow, *selectedCol, row, col)) {
+                // user has selected two adjacent cells to swap
+                swapCells(board, *selectedRow, *selectedCol, row, col);
+                *swappingCells = false;
+            } else {
+                // user clicked a non-adjacent cell, deselect first cell
+                *selectedRow = row;
+                *selectedCol = col;
+            }
+        } else {
+            // user is not currently swapping cells, check for power-up activation
+            if (board[row][col].powerUp != NONE && !board[row][col].matched) {
+                *usingPowerUp = true;
+                *powerUpRow = row;
+                *powerUpCol = col;
+                *selectedPowerUp = board[row][col].powerUp;
+            } else {
+                // user has clicked a cell to select it for swapping
+                *swappingCells = true;
+                *selectedRow = row;
+                *selectedCol = col;
+            }
+        }
+    }
+}
+
+
 //a function that listens for mouse clicks and converts the coordinates of the click into board coordinates (i.e. the row and column of the cell that was clicked). 
 // eparate function to handle key presses, such as activating power-ups. 
 
@@ -344,6 +512,20 @@ void checkMatches() {
     }
 }
 
+bool checkMatches(Cell board[BOARD_SIZE][BOARD_SIZE]) {
+    bool hasMatches = false;
+
+    // check for horizontal matches
+    int i, j;
+    for (i = 0; i < BOARD_SIZE; i++) {
+        for (j = 0; j < BOARD_SIZE - 2; j++) {
+            if (board[i][j].value == board[i][j+1].value && board[i][j+1].value == board[i][j+2].value) {
+                // three horizontal cells in
+            }
+        }
+    }
+}
+
 void checkGameOver() {
     if (numTurnsLeft <= 0) {
         printf("Out of turns, game over.\n");
@@ -358,5 +540,84 @@ void checkGameOver() {
     }
 }
 
+// adding obstacles to the game
 
+typedef enum {
+    CELL_EMPTY,
+    CELL_BLOCKED,
+    CELL_STONE,
+    CELL_POWERUP,
+    CELL_NUM_TYPES
+} CellType;
+
+typedef struct {
+    CellType type;
+    int value;
+    bool matched;
+    bool containsPowerUp;
+    bool isObstacle;
+} Cell;
+
+void generateBoard() {
+    // Initialize all cells to empty
+    for (int i = 0; i < BOARD_WIDTH; i++) {
+        for (int j = 0; j < BOARD_HEIGHT; j++) {
+            board[i][j].type = CELL_EMPTY;
+            board[i][j].value = 0;
+            board[i][j].matched = false;
+            board[i][j].containsPowerUp = false;
+            board[i][j].isObstacle = false;
+        }
+    }
+
+    // Place cells with values and power-ups
+    // ...
+
+    // Place obstacles
+    for (int i = 0; i < NUM_OBSTACLES; i++) {
+        int row, col;
+        do {
+            row = rand() % BOARD_HEIGHT;
+            col = rand() % BOARD_WIDTH;
+        } while (board[row][col].isObstacle || !isCellAccessible(row, col));
+        board[row][col].isObstacle = true;
+        board[row][col].type = CELL_BLOCKED; // Or CELL_STONE, depending on the obstacle type
+    }
+}
+
+
+bool isCellAccessible(int row, int col) {
+    if (board[row][col].isObstacle) {
+        return false;
+    }
+    if (row > 0 && board[row-1][col].isObstacle) {
+        return false;
+    }
+    // Check other neighboring cells
+    // ...
+    return true;
+}
+
+bool canCellsBeSwapped(int row1, int col1, int row2, int col2) {
+    if (board[row1][col1].isObstacle || board[row2][col2].isObstacle) {
+        return false;
+    }
+    // Check other conditions for swapping
+    // ...
+    return true;
+}
+
+void checkMatches() {
+    // Modify match checking algorithm to account for blocked cells
+    // ...
+}
+
+void activateStoneDestroyer(int row, int col) {
+    if (board[row][col].type == CELL_STONE) {
+        board[row][col].type = CELL_EMPTY;
+        board[row][col].isObstacle = false;
+        // Update score, or activate other effects
+        // ...
+    }
+}
 
