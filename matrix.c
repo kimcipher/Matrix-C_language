@@ -3,6 +3,10 @@
 #include <time.h>
 #include <stdbool.h>
 
+int currentLevel = 1;
+int score = 0;
+int movesLeft = MAX_MOVES;
+bool gameOver = false;
 
 
 // Define the board dimensions
@@ -287,4 +291,72 @@ void mysteryCell() {
 
     }
 }
+
+// User input handling
+void handleMouseClick(int x, int y) {
+    int row = y / CELL_SIZE;
+    int col = x / CELL_SIZE;
+    if (isValidCell(row, col)) {
+        // Handle selection of cell
+        // ...
+    }
+}
+
+void handleKeyPress(char key) {
+    switch (key) {
+        case 's':
+            activateShuffle();
+            break;
+        case 'b':
+            activateBomb();
+            break;
+        // Handle other power-ups
+        // ...
+        default:
+            printf("Invalid key pressed.\n");
+            break;
+    }
+}
+
+//a function that listens for mouse clicks and converts the coordinates of the click into board coordinates (i.e. the row and column of the cell that was clicked). 
+// eparate function to handle key presses, such as activating power-ups. 
+
+
+// Game logic
+// function that checks for matches on the board and updates the score accordingly.
+void checkMatches() {
+    bool hasMatches = false;
+    for (int i = 0; i < BOARD_WIDTH; i++) {
+        for (int j = 0; j < BOARD_HEIGHT; j++) {
+            if (!board[i][j].matched) {
+                int numMatches = countMatches(i, j);
+                if (numMatches >= MIN_MATCH_SIZE) {
+                    hasMatches = true;
+                    markMatches(i, j, numMatches);
+                    updateScore(numMatches);
+                }
+            }
+        }
+    }
+    if (!hasMatches) {
+        printf("No more matches, please try another move.\n");
+        // Decrement the number of turns left, or end the game if zero
+    }
+}
+
+void checkGameOver() {
+    if (numTurnsLeft <= 0) {
+        printf("Out of turns, game over.\n");
+        // End the game
+    } else if (!isBoardSolvable()) {
+        printf("Board is not solvable, please try again.\n");
+        // Reset the board
+    } else if (isBoardComplete()) {
+        printf("Congratulations, you've completed the level!\n");
+        // Load the next level
+        loadNextLevel(currentLevel);
+    }
+}
+
+
 
